@@ -1,5 +1,5 @@
 .DS_Store
-
+picture/*
 application/cache/*
 !application/cache/index.html
 !application/cache/.htaccess
