@@ -17,8 +17,19 @@ class RecipeModel {
 	public static function getSuccessor($parent, $dish_nutrition, $dish_price) {
 		global $_db;
 
-		$sql = "SELECT jaccard.y, jaccard.value, recipe.* FROM jaccard, recipe WHERE jaccard.x = ? AND jaccard.value < 1 AND recipe.id = jaccard.y AND recipe.calorie >= ? AND recipe.price <= ?";
+		$sql = "SELECT jaccard.y, jaccard.value, recipe.* FROM jaccard, recipe WHERE jaccard.x = ? AND jaccard.value <= 0.75 AND recipe.id = jaccard.y AND recipe.calorie >= ? AND recipe.price <= ?";
 		$input = array($parent, $dish_nutrition, $dish_price);
+		$dbh = $_db->prepare($sql);
+		$dbh->execute($input); 
+
+		return $dbh->fetchAll(PDO::FETCH_ASSOC);
+	}
+
+	public static function getByType($type) {
+		global $_db;
+
+		$sql = "SELECT id FROM recipe WHERE type = ?";
+		$input = array($type);
 		$dbh = $_db->prepare($sql);
 		$dbh->execute($input); 
 

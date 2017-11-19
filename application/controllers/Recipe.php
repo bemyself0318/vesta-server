@@ -11,7 +11,7 @@ class Recipe extends CI_Controller {
 	
 	public function recommend() {
 		$input = $this->input->post();
-		$rtn = $this->_mst($input['people'], $input['dishes'], $input['budget']);
+		$rtn = $this->_mst($input['people'], $input['dishes'], $input['budget'], $input['main_soup']);
 
 		$tc = 0;
 		$tp = 0;
@@ -26,10 +26,9 @@ class Recipe extends CI_Controller {
 			//refind
 			$loop_cnt++;
 			if ($loop_cnt == 1000) {
-				break; //太雖小了 找不到解
-				//提醒使用者 增加預算  或減少菜數
+				break; 	
 			}
-			$rtn = $this->_mst($input['people'], $input['dishes'], $input['budget']);
+			$rtn = $this->_mst($input['people'], $input['dishes'], $input['budget'], $input['main_soup']);
 			$tc = 0;
 			$tp = 0;
 			foreach($rtn['data'] as $node) {
@@ -162,27 +161,99 @@ class Recipe extends CI_Controller {
 		echo json_encode($ajax_data);
 	}
 	
-	public function _mst($people=3, $dishes=5, $budget=1000) {
+	public function _mst($people, $dishes, $budget, $main_soup) {
 		$rtn = array('code'=>1, 'data'=>array());	
 		$dish_nutrition = (int)$people * 700 / $dishes; // 700 means a human need take calorie per meal
 		$dish_budget = (int)$budget / $dishes;
 
 		$mst = array(); 
-
-		$root_id = rand(0,50000);
-		$first_children = RecipeModel::getSuccessor($root_id, $dish_nutrition, $dish_budget);
-		$void = 0;
-		while(count($first_children) == 0) {
-			$void ++;
-			$root_id = rand(0,50000);
-			$first_children = RecipeModel::getSuccessor($root_id, $dish_nutrition, $dish_budget);
-			if($void > 1000) {
-				$rtn['code'] = 0;
-				break;
-			}
-		}
-		array_push($mst, $root_id);
 		
+		
+		if ($main_soup == 3){
+			$main_id_array = RecipeModel::getByType('main');
+			$soup_id_array = RecipeModel::getByType('soup');
+			$main_id = $main_id_array[rand(0, count($main_id_array))]['id'];
+			$soup_id = $soup_id_array[rand(0, count($soup_id_array))]['id'];
+	
+			// main test  
+			$first_children = RecipeModel::getSuccessor($main_id, $dish_nutrition, $dish_budget);
+			$void = 0;
+			while(count($first_children) == 0) {
+				$void ++;
+				$main_id = $main_id_array[rand(0, count($main_id_array))]['id'];
+				$first_children = RecipeModel::getSuccessor($main_id, $dish_nutrition, $dish_budget);
+				if($void > 1000) {
+					$rtn['code'] = 0;
+					break;
+				}
+			}
+			array_push($mst, $main_id);
+			
+			//soup test
+			$first_children = RecipeModel::getSuccessor($soup_id, $dish_nutrition, $dish_budget);
+			$void = 0;
+			while(count($first_children) == 0) {
+				$void ++;
+				$soup_id = $soup_id_array[rand(0, count($soup_id_array))]['id'];
+				$first_children = RecipeModel::getSuccessor($soup_id, $dish_nutrition, $dish_budget);
+				if($void > 1000) {
+					$rtn['code'] = 0;
+					break;
+				}
+			}
+			array_push($mst, $soup_id);
+		}
+		else if ($main_soup == 2) {
+			$soup_id_array = RecipeModel::getByType('soup');
+			$soup_id = $soup_id_array[rand(0, count($soup_id_array))]['id'];
+			//soup test
+			$first_children = RecipeModel::getSuccessor($soup_id, $dish_nutrition, $dish_budget);
+			$void = 0;
+			while(count($first_children) == 0) {
+				$void ++;
+				$soup_id = $soup_id_array[rand(0, count($soup_id_array))]['id'];
+				$first_children = RecipeModel::getSuccessor($soup_id, $dish_nutrition, $dish_budget);
+				if($void > 1000) {
+					$rtn['code'] = 0;
+					break;
+				}
+			}
+			array_push($mst, $soup_id);
+		}
+		else if ($main_soup == 1) {
+			$main_id_array = RecipeModel::getByType('main');
+			$main_id = $main_id_array[rand(0, count($main_id_array))]['id'];
+			// main test  
+			$first_children = RecipeModel::getSuccessor($main_id, $dish_nutrition, $dish_budget);
+			$void = 0;
+			while(count($first_children) == 0) {
+				$void ++;
+				$main_id = $main_id_array[rand(0, count($main_id_array))]['id'];
+				$first_children = RecipeModel::getSuccessor($main_id, $dish_nutrition, $dish_budget);
+				if($void > 1000) {
+					$rtn['code'] = 0;
+					break;
+				}
+			}
+			array_push($mst, $main_id);
+		}
+		else {
+			// all normal
+			$root_id = rand(0,95454);
+			$first_children = RecipeModel::getSuccessor($root_id, $dish_nutrition, $dish_budget);
+			$void = 0;
+			while(count($first_children) == 0) {
+				$void ++;
+				$root_id = rand(0,95454);
+				$first_children = RecipeModel::getSuccessor($root_id, $dish_nutrition, $dish_budget);
+				if($void > 1000) {
+					$rtn['code'] = 0;
+					break;
+				}
+			}
+			array_push($mst, $root_id);
+		}
+
 		while(count($mst) < $dishes) {
 			$void ++;
 			$nu_max = 0;
