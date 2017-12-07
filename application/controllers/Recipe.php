@@ -24,6 +24,7 @@ class Recipe extends CI_Controller {
 		$loop_cnt = 0;
 		while($rtn['code'] == 0 || $tp > 1.2 * $input['budget']) {
 			//refind
+			print_r('refind');
 			$loop_cnt++;
 			if ($loop_cnt == 1000) {
 				break; 	
@@ -61,6 +62,7 @@ class Recipe extends CI_Controller {
 		
 		$need_change_recipe = RecipeModel::getById($post_data['change_id']);
 		$dish_nutrition = $need_change_recipe['calorie'];
+		$origin_type = $need_change_recipe['type'];
 		
 		$current_cost = 0;
 		foreach($recipe_list as $r) {
@@ -74,7 +76,9 @@ class Recipe extends CI_Controller {
 			$tmp = RecipeModel::getSuccessor($id, $dish_nutrition, $dish_budget);
 			if($tmp) {
 				foreach($tmp as $r) {
-					array_push($new_recipes, $r);
+					if($r['type'] == $origin_type) {
+						array_push($new_recipes, $r);
+					}
 				}
 			}
 		}
@@ -82,7 +86,8 @@ class Recipe extends CI_Controller {
 		$ajax_data = array('new_recipe'=>array(), 'find'=>false);
 		// $min_calorie = -1;
 		$void_infinite = count($new_recipes);
-		$new_id = rand(0, count($new_recipes)-1);
+		$rand = $new_recipes[array_rand($new_recipes, 1)];
+		$new_id = $rand['id'];
 		while(1) {
 			if ($new_id != $post_data['change_id'] && !in_array($new_id, $recipe_list)) {
 				$tmp = RecipeModel::getById($new_id);
@@ -91,12 +96,9 @@ class Recipe extends CI_Controller {
 					$ajax_data['new_recipe'] = $tmp;
 					break;
 				}
-				else {
-					continue;
-				}
-				
 			}
-			$new_id = rand(0, count($new_recipes)-1);
+			$rand = $new_recipes[array_rand($new_recipes, 1)];
+			$new_id = $rand['id'];
 			$void_infinite -= 1;
 			if($void_infinite < 0) {
 				break;
@@ -262,6 +264,9 @@ class Recipe extends CI_Controller {
 			foreach ($mst as $node_id) {
 				$children = RecipeModel::getSuccessor($node_id, $dish_budget, $dish_nutrition, $dish_budget);
 				foreach ($children as $child) {
+					if($child['type'] != 'normal'){
+						continue;
+					}
 					if ($child['calorie'] > $nu_max && ! in_array($child['id'], $mst)) {
 						$nu_max = $child['calorie'];
 						$min_budget = $child['price'];
