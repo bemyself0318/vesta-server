@@ -24,7 +24,6 @@ class Recipe extends CI_Controller {
 		$loop_cnt = 0;
 		while($rtn['code'] == 0 || $tp > 1.2 * $input['budget']) {
 			//refind
-			print_r('refind');
 			$loop_cnt++;
 			if ($loop_cnt == 1000) {
 				break; 	
